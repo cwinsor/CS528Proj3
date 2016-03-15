@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Google Fit</string>
+
+    <string name="summary">a_summary0</string>
+    <string name="entry">a_summary1</string>
+    <string name="another_entry">a_summary2</string>
+    <string name="third_entry">a_summary3</string>
+    <string name="yet_another_entry">a_summary4</string>
+    <string name="low">a_summary5</string>
+
+    <string name="download_complete">a_summary6</string>
+    <string name="fun">a_summary7</string>
+    <string name="play">a_summary8</string>
+</resources>
