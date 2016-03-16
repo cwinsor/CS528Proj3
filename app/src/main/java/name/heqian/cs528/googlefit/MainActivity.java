@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 
@@ -78,17 +79,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void onResume() {
         super.onResume();
         Log.e("MainActivity", "------------------------->onResume");
-        int zona = 0;
-        zona++;
         Intent intent = getIntent();
 
-        String activityType = intent.getStringExtra("activity_type");
-
-        TextView t = (TextView) findViewById(R.id.textView2);
-        if (activityType != null) {
-            t.setText("R You are " + activityType);
-        }
-
+        handleUi(intent);
     }
 
     // The following is how the Intent arrives back to me
@@ -98,15 +91,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Log.e("MainActivity", "------------------------->onNewIntent");
         setIntent(intent);
 
+        handleUi(intent);
+    }
 
+    public void handleUi(Intent intent) {
         String activityType = intent.getStringExtra("activity_type");
-
         TextView t = (TextView) findViewById(R.id.textView2);
         if (activityType != null) {
-            t.setText("N You are " + activityType);
+            t.setText("You are " + activityType);
         }
-        int z = 0;
-        z = z + 1;
+
+        int imageTarget = intent.getIntExtra("image_source", 0);
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        if (imageView != null) {
+            imageView.setImageResource(imageTarget);
+        }
     }
 
 }

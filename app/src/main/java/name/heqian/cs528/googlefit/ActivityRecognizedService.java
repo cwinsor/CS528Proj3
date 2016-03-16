@@ -10,6 +10,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
@@ -100,7 +102,7 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.IN_VEHICLE: {
                 showToast("In Vehicle");
                 Log.e("ActivityRecogition", "--------->InVehicle");
-                sendNotification("In Vehicle", R.drawable.in_vehicle);
+                sendNotification("In Vehicle", R.drawable.in_vehicle, R.mipmap.in_vehicle);
                 break;
             }
             case DetectedActivity.ON_BICYCLE: {
@@ -108,21 +110,18 @@ public class ActivityRecognizedService extends IntentService {
                 break;
             }
             case DetectedActivity.ON_FOOT: {
-                showToast("Walking");
-                Log.e("ActivityRecogition", "--------->Walking");
-                sendNotification("Walking", R.drawable.walking);
                 break;
             }
             case DetectedActivity.RUNNING: {
                 showToast("Running");
                 Log.e("ActivityRecogition", "--------->Running");
-                sendNotification("Running", R.drawable.running);
+                sendNotification("Running", R.drawable.running, R.mipmap.running);
                 break;
             }
             case DetectedActivity.STILL: {
                 showToast("Still");
                 Log.e("ActivityRecogition", "--------->Still");
-                sendNotification("Still", R.drawable.still);
+                sendNotification("Still", R.drawable.still, R.mipmap.still);
                 break;
             }
             case DetectedActivity.TILTING: {
@@ -132,7 +131,7 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.WALKING: {
                 showToast("Walking");
                 Log.e("ActivityRecogition", "--------->Walking");
-                sendNotification("Walking", R.drawable.walking);
+                sendNotification("Walking", R.drawable.walking, R.mipmap.walking);
                 break;
             }
             case DetectedActivity.UNKNOWN: {
@@ -147,13 +146,27 @@ public class ActivityRecognizedService extends IntentService {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+//
+Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+//                RelativeLayout toastLayout = (RelativeLayout) toast.getView();
+//                TextView toastTV = (TextView) toastLayout.getChildAt(0);
+//                toastTV.setTextSize(30);
+                toast.show();
+
+//                Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+//
+//                RelativeLayout toastLayout = (RelativeLayout) toast.getView();
+//                TextView toastTV = (TextView) toastLayout.getChildAt(0);
+//                toastTV.setTextSize(30);
+//                toast.show();
+
+
             }
         });
     }
 
 
-    private void sendNotification(String msg, int smallIcon) {
+    private void sendNotification(String msg, int smallIcon, int image) {
 
         // the following creates a Notification which gets sent to the
         // the PendingIntent defines what happens when the user clicks on the notification
@@ -166,10 +179,9 @@ public class ActivityRecognizedService extends IntentService {
         intent = new Intent(this, MainActivity.class);
         // intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("activity_type", "unmodified"); // caller will modify this
-
-
+        // intent.putExtra("activity_type", "unmodified"); // caller will modify this
         intent.putExtra("activity_type", msg); // <-- HERE I PUT THE EXTRA VALUE
+        intent.putExtra("image_source", image); // <-- HERE I PUT THE EXTRA VALUE
 
         // pass the Intent to TaskStackBuilder (Head First pg 559)
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
