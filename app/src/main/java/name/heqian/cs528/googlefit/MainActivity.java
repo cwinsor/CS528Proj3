@@ -14,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -65,24 +66,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // The following static method builds an Intent which will
     // be used by others to generate a Notification that
     // will come back to me
-    public static Intent newIntent(Context context) {
-        Intent intent = new Intent(context, MainActivity.class);
-        // intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra("activity_type", "unknown"); // caller will modify this
-        return intent;
+    //  public static Intent newIntent(Context context) {
+    //      Intent intent = new Intent(context, MainActivity.class);
+    //       intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    //      // intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    //      intent.putExtra("activity_type", "unmodified"); // caller will modify this
+    //      return intent;
+    //  }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.e("MainActivity", "------------------------->onResume");
+        int zona = 0;
+        zona++;
+        Intent intent = getIntent();
+
+        String activityType = intent.getStringExtra("activity_type");
+
+        TextView t = (TextView) findViewById(R.id.textView2);
+        if (activityType != null) {
+            t.setText("R You are " + activityType);
+        }
+
     }
 
     // The following is how the Intent arrives back to me
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        Log.e("MainActivity", "------------------------->onNewIntent");
+        setIntent(intent);
+
+
         String activityType = intent.getStringExtra("activity_type");
 
         TextView t = (TextView) findViewById(R.id.textView2);
-        t.invalidate();
-        t.setText("You are " + activityType);
-
+        if (activityType != null) {
+            t.setText("N You are " + activityType);
+        }
         int z = 0;
         z = z + 1;
     }

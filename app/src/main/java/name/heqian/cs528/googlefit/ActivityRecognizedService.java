@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,9 +22,12 @@ import java.util.List;
  */
 public class ActivityRecognizedService extends IntentService {
 
+    static Notification notification;
+    static Intent intent;
+
     // Handler is used to send msg to the main app thread.  It is started in onStartCommand() thread
     private Handler handler;
-    static DetectedActivity lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
+    //  static DetectedActivity lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
     static DetectedActivity currentActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
 
     public ActivityRecognizedService() {
@@ -37,10 +41,9 @@ public class ActivityRecognizedService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         handler = new Handler();
-        doCurrentActivity(currentActivity);
+        doCurrentActivity(new DetectedActivity(DetectedActivity.UNKNOWN, 100));
         return super.onStartCommand(intent, flags, startId);
     }
-
 
 
     @Override
@@ -49,24 +52,44 @@ public class ActivityRecognizedService extends IntentService {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
             handleDetectedActivities(result.getProbableActivities());
-            myHandleDetectedActivities(result);
+            myHandleDetectedActivities(result.getProbableActivities());
         }
     }
 
+    protected void myHandleDetectedActivities(List<DetectedActivity> probableActivities) {
 
-    protected void myHandleDetectedActivities(ActivityRecognitionResult result) {
-        DetectedActivity underConsiderationMostLikely = result.getMostProbableActivity();
-
-        if (underConsiderationMostLikely.getConfidence() >= 0) {
-            if (underConsiderationMostLikely.getType() == currentActivity.getType()) {
-                // do nothing
-            } else {
-                // we have a new activity
-                lastActivity = currentActivity;
-                currentActivity = underConsiderationMostLikely;
-
-                doCurrentActivity(currentActivity);
+        DetectedActivity currentLeader = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
+        for (DetectedActivity activity : probableActivities) {
+            if (
+                    (
+                            (activity.getType() == DetectedActivity.RUNNING) ||
+                                    (activity.getType() == DetectedActivity.WALKING) ||
+                                    (activity.getType() == DetectedActivity.STILL) ||
+                                    (activity.getType() == DetectedActivity.IN_VEHICLE)
+                    ) && (activity.getConfidence() >= currentLeader.getConfidence())) {
+                currentLeader = activity;
             }
+        }
+
+        //  protected void myHandleDetectedActivities(ActivityRecognitionResult result) {
+        //        DetectedActivity underConsiderationMostLikely = result.getMostProbableActivity();
+        //
+        //        if ((underConsiderationMostLikely.getType() == DetectedActivity.RUNNING) ||
+        //               /* (underConsiderationMostLikely.getType() == DetectedActivity.ON_FOOT) || */
+        //                (underConsiderationMostLikely.getType() == DetectedActivity.WALKING) ||
+        //                (underConsiderationMostLikely.getType() == DetectedActivity.STILL) ||
+        //                (underConsiderationMostLikely.getType() == DetectedActivity.IN_VEHICLE)) {
+
+
+        // only create a notification if there is a CHANGE in the activity
+        if (currentLeader.getType() == currentActivity.getType()) {
+            // do nothing
+        } else {
+            // we have a new activity
+            // lastActivity = currentActivity;
+            currentActivity = currentLeader;
+
+            doCurrentActivity(currentActivity);
         }
     }
 
@@ -76,38 +99,44 @@ public class ActivityRecognizedService extends IntentService {
         switch (activity.getType()) {
             case DetectedActivity.IN_VEHICLE: {
                 showToast("In Vehicle");
+                Log.e("ActivityRecogition", "--------->InVehicle");
                 sendNotification("In Vehicle", R.drawable.in_vehicle);
                 break;
             }
             case DetectedActivity.ON_BICYCLE: {
-                showToast("On Bicycle");
+
                 break;
             }
             case DetectedActivity.ON_FOOT: {
-                showToast("On Foot");
+                showToast("Walking");
+                Log.e("ActivityRecogition", "--------->Walking");
+                sendNotification("Walking", R.drawable.walking);
                 break;
             }
             case DetectedActivity.RUNNING: {
                 showToast("Running");
+                Log.e("ActivityRecogition", "--------->Running");
                 sendNotification("Running", R.drawable.running);
                 break;
             }
             case DetectedActivity.STILL: {
                 showToast("Still");
+                Log.e("ActivityRecogition", "--------->Still");
                 sendNotification("Still", R.drawable.still);
                 break;
             }
             case DetectedActivity.TILTING: {
-                showToast("Tilting");
+
                 break;
             }
             case DetectedActivity.WALKING: {
                 showToast("Walking");
+                Log.e("ActivityRecogition", "--------->Walking");
                 sendNotification("Walking", R.drawable.walking);
                 break;
             }
             case DetectedActivity.UNKNOWN: {
-                showToast("Unknown");
+
                 break;
             }
         }
@@ -131,21 +160,38 @@ public class ActivityRecognizedService extends IntentService {
         // and in this case the PendingIntent has been defined in MainActivity itself
         // and that is to go to MainActivity
         Resources resources = getResources();
-        Intent i = MainActivity.newIntent(this);
-        i.putExtra("activity_type", msg); // <-- HERE I PUT THE EXTRA VALUE
+        //  Intent intent = MainActivity.newIntent(this);
+
+       /* zona Intent */
+        intent = new Intent(this, MainActivity.class);
+        // intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("activity_type", "unmodified"); // caller will modify this
+
+
+        intent.putExtra("activity_type", msg); // <-- HERE I PUT THE EXTRA VALUE
+
+        // pass the Intent to TaskStackBuilder (Head First pg 559)
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(intent);
 
         // PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Notification notification = new NotificationCompat.Builder(this)
+       /* zona Notification */
+        notification = new NotificationCompat.Builder(this)
                 .setTicker(resources.getString(R.string.new_pictures_title))
                 .setSmallIcon(smallIcon)
                 .setContentTitle(resources.getString(R.string.new_pictures_title))
                 .setContentText(resources.getString(R.string.new_pictures_text))
                 .setContentIntent(pi)
-                        //  .setAutoCancel(true)
-                          .setOnlyAlertOnce(false)
+                .setAutoCancel(false)
+                .setOnlyAlertOnce(false)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .build();
+        // notif.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(0, notification);
@@ -181,13 +227,13 @@ public class ActivityRecognizedService extends IntentService {
                 }
                 case DetectedActivity.WALKING: {
                     Log.e("ActivityRecogition", "Walking: " + activity.getConfidence());
-                    if (activity.getConfidence() >= 75) {
-                        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-                        builder.setContentText("Are you walking?");
-                        builder.setSmallIcon(R.mipmap.ic_launcher);
-                        builder.setContentTitle(getString(R.string.app_name));
-                        NotificationManagerCompat.from(this).notify(0, builder.build());
-                    }
+//                    if (activity.getConfidence() >= 75) {
+//                        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+//                        builder.setContentText("Are you walking?");
+//                        builder.setSmallIcon(R.mipmap.ic_launcher);
+//                        builder.setContentTitle(getString(R.string.app_name));
+//                        NotificationManagerCompat.from(this).notify(0, builder.build());
+//                    }
                     break;
                 }
                 case DetectedActivity.UNKNOWN: {

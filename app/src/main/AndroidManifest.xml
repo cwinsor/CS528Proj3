@@ -10,7 +10,8 @@
         android:theme="@style/Theme.AppCompat.Light">
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTop">
+            android:label="GoogleFit"
+            android:launchMode="singleTop"  >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
