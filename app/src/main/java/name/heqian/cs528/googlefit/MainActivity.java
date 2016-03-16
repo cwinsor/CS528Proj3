@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
 import android.view.View;
+import android.widget.TextView;
 
 
 import com.google.android.gms.common.ConnectionResult;
@@ -66,17 +67,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // will come back to me
     public static Intent newIntent(Context context) {
         Intent intent = new Intent(context, MainActivity.class);
-//        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra("activity_type", "unknown"); // caller will modify this
         return intent;
     }
 
     // The following is how the Intent arrives back to me
     @Override
     protected void onNewIntent(Intent intent) {
-        // TODO Auto-generated method stub
         super.onNewIntent(intent);
-//        setIntent(intent);
+        String activityType = intent.getStringExtra("activity_type");
+
+        TextView t = (TextView) findViewById(R.id.textView2);
+        t.setText("You are " + activityType);
+
         int z = 0;
         z = z + 1;
     }
