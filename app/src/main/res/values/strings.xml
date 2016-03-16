@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Google Fit</string>
 
+    <string name="new_pictures_title">New activities have been reported...</string>
+    <string name="new_pictures_text">tap here to see the updates</string>
+
     <string name="summary">a_summary0</string>
     <string name="entry">a_summary1</string>
     <string name="another_entry">a_summary2</string>

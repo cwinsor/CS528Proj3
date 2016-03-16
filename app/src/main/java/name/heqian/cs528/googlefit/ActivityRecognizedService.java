@@ -1,7 +1,10 @@
 package name.heqian.cs528.googlefit;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -25,7 +28,6 @@ public class ActivityRecognizedService extends IntentService {
     private Handler handler;
     static DetectedActivity lastActivity = null;
     static DetectedActivity currentActivity = null;
-static int zona = 0;
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
@@ -48,10 +50,33 @@ static int zona = 0;
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
             handleDetectedActivities(result.getProbableActivities());
 
+            // send toast message to MainActivity
             sendMsgToMainThread(result);
+
+            // the following creates a Notification which gets sent to the
+            // the PendingIntent defines what happens when the user clicks on the notification
+            // and in this case the PendingIntent has been defined in MainActivity itself
+            // and that is to go to MainActivity
+            Resources resources = getResources();
+            Intent i = MainActivity.newIntent(this);
+            PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+
+            Notification notification = new NotificationCompat.Builder(this)
+                    .setTicker(resources.getString(R.string.new_pictures_title))
+                    .setSmallIcon(android.R.drawable.ic_menu_report_image)
+                    .setContentTitle(resources.getString(R.string.new_pictures_title))
+                    .setContentText(resources.getString(R.string.new_pictures_text))
+                    .setContentIntent(pi)
+                    .setAutoCancel(true)
+                    .build();
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.notify(0, notification);
+
         }
     }
 
+    // use a "handler" to send a Runnable "toast"
     protected void sendMsgToMainThread(ActivityRecognitionResult result) {
         DetectedActivity underConsiderationMostLikely = result.getMostProbableActivity();
         // initially the currentActivity will be null - avoid this case
@@ -60,10 +85,7 @@ static int zona = 0;
         }
         if (underConsiderationMostLikely.getConfidence() >= 75) {
             if (underConsiderationMostLikely.getType() == currentActivity.getType()) {
-                // do nothing
-
-                zona = zona + 1;
-
+           // do nothing
             } else {
                 // we have a new activity
                 lastActivity = currentActivity;
@@ -75,6 +97,16 @@ static int zona = 0;
             }
         }
     }
+
+    private void showText(final String text) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
 
 
     private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
@@ -125,15 +157,4 @@ static int zona = 0;
         }
     }
 
-    private void showText(final String text) {
-
-        // zona
-        
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
 }
