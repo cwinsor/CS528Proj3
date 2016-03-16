@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         String activityType = intent.getStringExtra("activity_type");
 
         TextView t = (TextView) findViewById(R.id.textView2);
+        t.invalidate();
         t.setText("You are " + activityType);
 
         int z = 0;

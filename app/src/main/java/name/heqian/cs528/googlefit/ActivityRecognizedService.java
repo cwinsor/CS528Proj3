@@ -14,8 +14,6 @@ import android.widget.Toast;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,8 +23,8 @@ public class ActivityRecognizedService extends IntentService {
 
     // Handler is used to send msg to the main app thread.  It is started in onStartCommand() thread
     private Handler handler;
-    static DetectedActivity lastActivity = null;
-    static DetectedActivity currentActivity = null;
+    static DetectedActivity lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
+    static DetectedActivity currentActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 100);
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
@@ -39,56 +37,27 @@ public class ActivityRecognizedService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         handler = new Handler();
+        doCurrentActivity(currentActivity);
         return super.onStartCommand(intent, flags, startId);
     }
+
 
 
     @Override
     protected void onHandleIntent(Intent intent) {
         if (ActivityRecognitionResult.hasResult(intent)) {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+
             handleDetectedActivities(result.getProbableActivities());
-
-            // send toast message to MainActivity
             myHandleDetectedActivities(result);
-
-            // the following creates a Notification which gets sent to the
-            // the PendingIntent defines what happens when the user clicks on the notification
-            // and in this case the PendingIntent has been defined in MainActivity itself
-            // and that is to go to MainActivity
-            Resources resources = getResources();
-            Intent i = MainActivity.newIntent(this);
-            i.putExtra("activity_type", "flying"); // <-- HERE I PUT THE EXTRA VALUE
-
-            // PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
-            PendingIntent pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-
-
-
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setTicker(resources.getString(R.string.new_pictures_title))
-                    .setSmallIcon(R.drawable.running)
-                    .setContentTitle(resources.getString(R.string.new_pictures_title))
-                    .setContentText(resources.getString(R.string.new_pictures_text))
-                    .setContentIntent(pi)
-                    .setAutoCancel(true)
-                    .setOnlyAlertOnce(false)
-                    .build();
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            notificationManager.notify(0, notification);
-
         }
     }
 
-    // use a "handler" to send a Runnable "toast"
+
     protected void myHandleDetectedActivities(ActivityRecognitionResult result) {
         DetectedActivity underConsiderationMostLikely = result.getMostProbableActivity();
-        // initially the currentActivity will be null - avoid this case
-        if (currentActivity == null) {
-            currentActivity = underConsiderationMostLikely;
-        }
-        if (underConsiderationMostLikely.getConfidence() >= 75) {
+
+        if (underConsiderationMostLikely.getConfidence() >= 0) {
             if (underConsiderationMostLikely.getType() == currentActivity.getType()) {
                 // do nothing
             } else {
@@ -96,14 +65,56 @@ public class ActivityRecognizedService extends IntentService {
                 lastActivity = currentActivity;
                 currentActivity = underConsiderationMostLikely;
 
-                // toast to the user
-                showText(currentActivity.toString() + DateFormat.getDateTimeInstance().format(new Date()));
-                // showText(currentActivity.zzho(currentActivity.getType()));
+                doCurrentActivity(currentActivity);
             }
         }
     }
 
-    private void showText(final String text) {
+
+    public void doCurrentActivity(DetectedActivity activity) {
+
+        switch (activity.getType()) {
+            case DetectedActivity.IN_VEHICLE: {
+                showToast("In Vehicle");
+                sendNotification("In Vehicle", R.drawable.in_vehicle);
+                break;
+            }
+            case DetectedActivity.ON_BICYCLE: {
+                showToast("On Bicycle");
+                break;
+            }
+            case DetectedActivity.ON_FOOT: {
+                showToast("On Foot");
+                break;
+            }
+            case DetectedActivity.RUNNING: {
+                showToast("Running");
+                sendNotification("Running", R.drawable.running);
+                break;
+            }
+            case DetectedActivity.STILL: {
+                showToast("Still");
+                sendNotification("Still", R.drawable.still);
+                break;
+            }
+            case DetectedActivity.TILTING: {
+                showToast("Tilting");
+                break;
+            }
+            case DetectedActivity.WALKING: {
+                showToast("Walking");
+                sendNotification("Walking", R.drawable.walking);
+                break;
+            }
+            case DetectedActivity.UNKNOWN: {
+                showToast("Unknown");
+                break;
+            }
+        }
+    }
+
+
+    private void showToast(final String text) {
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -113,8 +124,35 @@ public class ActivityRecognizedService extends IntentService {
     }
 
 
-    private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
+    private void sendNotification(String msg, int smallIcon) {
 
+        // the following creates a Notification which gets sent to the
+        // the PendingIntent defines what happens when the user clicks on the notification
+        // and in this case the PendingIntent has been defined in MainActivity itself
+        // and that is to go to MainActivity
+        Resources resources = getResources();
+        Intent i = MainActivity.newIntent(this);
+        i.putExtra("activity_type", msg); // <-- HERE I PUT THE EXTRA VALUE
+
+        // PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+        PendingIntent pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setTicker(resources.getString(R.string.new_pictures_title))
+                .setSmallIcon(smallIcon)
+                .setContentTitle(resources.getString(R.string.new_pictures_title))
+                .setContentText(resources.getString(R.string.new_pictures_text))
+                .setContentIntent(pi)
+                        //  .setAutoCancel(true)
+                          .setOnlyAlertOnce(false)
+                .build();
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(0, notification);
+    }
+
+
+    private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
         for (DetectedActivity activity : probableActivities) {
             switch (activity.getType()) {
                 case DetectedActivity.IN_VEHICLE: {
@@ -149,7 +187,6 @@ public class ActivityRecognizedService extends IntentService {
                         builder.setSmallIcon(R.mipmap.ic_launcher);
                         builder.setContentTitle(getString(R.string.app_name));
                         NotificationManagerCompat.from(this).notify(0, builder.build());
-
                     }
                     break;
                 }
@@ -160,5 +197,5 @@ public class ActivityRecognizedService extends IntentService {
             }
         }
     }
-
 }
+
