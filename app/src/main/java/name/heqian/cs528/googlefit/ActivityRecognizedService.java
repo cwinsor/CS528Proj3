@@ -15,7 +15,6 @@ import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
 import java.text.DateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class ActivityRecognizedService extends IntentService {
             handleDetectedActivities(result.getProbableActivities());
 
             // send toast message to MainActivity
-            sendMsgToMainThread(result);
+            myHandleDetectedActivities(result);
 
             // the following creates a Notification which gets sent to the
             // the PendingIntent defines what happens when the user clicks on the notification
@@ -59,15 +58,19 @@ public class ActivityRecognizedService extends IntentService {
             // and that is to go to MainActivity
             Resources resources = getResources();
             Intent i = MainActivity.newIntent(this);
-            PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+            // PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+            PendingIntent pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
 
             Notification notification = new NotificationCompat.Builder(this)
                     .setTicker(resources.getString(R.string.new_pictures_title))
-                    .setSmallIcon(android.R.drawable.ic_menu_report_image)
+                    .setSmallIcon(R.drawable.running)
                     .setContentTitle(resources.getString(R.string.new_pictures_title))
                     .setContentText(resources.getString(R.string.new_pictures_text))
                     .setContentIntent(pi)
                     .setAutoCancel(true)
+                    .setOnlyAlertOnce(false)
                     .build();
 
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
@@ -77,7 +80,7 @@ public class ActivityRecognizedService extends IntentService {
     }
 
     // use a "handler" to send a Runnable "toast"
-    protected void sendMsgToMainThread(ActivityRecognitionResult result) {
+    protected void myHandleDetectedActivities(ActivityRecognitionResult result) {
         DetectedActivity underConsiderationMostLikely = result.getMostProbableActivity();
         // initially the currentActivity will be null - avoid this case
         if (currentActivity == null) {
@@ -85,7 +88,7 @@ public class ActivityRecognizedService extends IntentService {
         }
         if (underConsiderationMostLikely.getConfidence() >= 75) {
             if (underConsiderationMostLikely.getType() == currentActivity.getType()) {
-           // do nothing
+                // do nothing
             } else {
                 // we have a new activity
                 lastActivity = currentActivity;
@@ -106,7 +109,6 @@ public class ActivityRecognizedService extends IntentService {
             }
         });
     }
-
 
 
     private void handleDetectedActivities(List<DetectedActivity> probableActivities) {

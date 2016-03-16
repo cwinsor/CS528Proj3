@@ -7,12 +7,14 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
+import android.view.View;
 
 
 import com.google.android.gms.common.ConnectionResult;
@@ -59,9 +61,26 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     }
 
-    // The following static method is to be used by others to generate a Notification that
+    // The following static method builds an Intent which will
+    // be used by others to generate a Notification that
     // will come back to me
     public static Intent newIntent(Context context) {
-        return new Intent(context, MainActivity.class);
+        Intent intent = new Intent(context, MainActivity.class);
+//        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return intent;
     }
+
+    // The following is how the Intent arrives back to me
+    @Override
+    protected void onNewIntent(Intent intent) {
+        // TODO Auto-generated method stub
+        super.onNewIntent(intent);
+//        setIntent(intent);
+        int z = 0;
+        z = z + 1;
+    }
+
 }
+
+
